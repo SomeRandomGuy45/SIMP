@@ -5,7 +5,9 @@ const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const expressWs = require('express-ws');
 const app = express();
+expressWs(app);
 const port = process.env["PORT"] || 8080;
 dotenv.config();
 
@@ -213,14 +215,9 @@ app.get('/api/project-data/:projectName/download', (req, res) => {
     });
 });
 
-// Store uploaded file information with user ID
-app.post('/api/project-data/:projectName/upload', verifyToken, upload.single('file'), (req, res) => {
-    const projectName = req.params.projectName;
-    const file = req.file;
-    const userId = req.userId;  // Get user ID from token
-
+async function uploadFile(projectName, userId) {
     if (!file) {
-        return res.status(400).json({ status: 'Error', message: 'No file uploaded' });
+        return "error1"
     }
 
     // Read userUploads from uploads.json
@@ -228,21 +225,34 @@ app.post('/api/project-data/:projectName/upload', verifyToken, upload.single('fi
 
     // Check if the user has already uploaded a file for this project
     if (userUploads[projectName] && userUploads[projectName] !== userId) {
-        return res.status(403).json({ status: 'Error', message: 'You cannot re-upload this file' });
+        return "error2"
     }
 
     // Record the user's upload
     userUploads[projectName] = userId;
 
     // Save the updated userUploads to uploads.json
-    saveUploadsToFile(userUploads);
+    saveUploadsToFile(userUploads)
+}
 
+// Store uploaded file information with user ID
+app.post('/api/project-data/:projectName/upload', verifyToken, upload.single('file'), async (req, res) => {
+    const projectName = req.params.projectName;
+    const file = req.file;
+    const userId = req.userId;  // Get user ID from token
+
+    let msg = await uploadFile(projectName, userId);
+    if (msg == "error1") {
+        return res.status(400).json({ status: 'Error', message: 'No file uploaded' });
+    } else if (msg == "error2") {
+        return res.status(403).json({ status: 'Error', message: 'You cannot re-upload this file' });
+    }
     res.setHeader('Content-Type', 'application/json');
     res.json({
         status: 'OK',
         message: `File ${file.originalname} uploaded successfully to project ${projectName}`,
         file: file,
-    });
+    }); 
 });
 
 app.listen(port, () => {
