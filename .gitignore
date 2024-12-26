@@ -11,3 +11,7 @@ client/libsimplib.so
 .DS_STORE
 simp
 server/node_modules
+uploads.json
+users.json
+projects
+projects/*

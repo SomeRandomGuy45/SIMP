@@ -12,15 +12,15 @@ MAIN_OBJ = $(MAIN_SRC:.c=.o)
 
 # Shared library output name
 ifeq ($(OS),Windows_NT)
-    LIB_TARGET = libsimplib.dll
+    LIB_TARGET = libsimp.dll
     LDFLAGS = -shared
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Darwin)
-        LIB_TARGET = libsimplib.dylib
+        LIB_TARGET = libsimp.dylib
         LDFLAGS = -shared
     else
-        LIB_TARGET = libsimplib.so
+        LIB_TARGET = libsimp.so
         LDFLAGS = -shared
     endif
 endif
@@ -31,18 +31,21 @@ EXECUTABLE = simp
 # Default rule to build everything
 all: $(EXECUTABLE)
 
+build_thing:
+	clang -c simp-helper/cJSON.c -o simp-helper/cJSON.o
+
 # Rule to build the shared library
 $(LIB_TARGET): $(LIB_OBJS)
 	$(CC) $(LIB_OBJS) $(LDFLAGS) -lcurl -o $(LIB_TARGET)
 
 # Rule to compile the main program and link with the library
 $(EXECUTABLE): $(MAIN_OBJ) $(LIB_TARGET)
-	$(CC) $(MAIN_OBJ) -L. -lsimplib -o $(EXECUTABLE)
+	$(CC) $(MAIN_OBJ) -L. -lsimp -o $(EXECUTABLE)
 
 # Rule to compile .c files into .o
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) simp-helper/cJSON.o -c $< -o $@
 
 # Clean up build files
 clean:
-	rm -rf $(LIB_OBJS) $(MAIN_OBJ) $(LIB_TARGET) $(EXECUTABLE) *.o src/*.o
+	rm -rf $(LIB_OBJS) $(MAIN_OBJ) $(LIB_TARGET) $(EXECUTABLE) *.o src/*.o simp-helper/cJSON.o
