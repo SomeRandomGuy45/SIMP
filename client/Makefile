@@ -1,5 +1,5 @@
 # Compiler and flags
-CC = clang
+CC = gcc
 CFLAGS = -Wall -g -fPIC # -fPIC for shared libraries
 
 # Source files for the library and main executable
@@ -22,6 +22,7 @@ else
     else
         LIB_TARGET = libsimp.so
         LDFLAGS = -shared
+        LINUX_FLAGS = -Wl,-rpath='$$ORIGIN'
     endif
 endif
 
@@ -40,7 +41,7 @@ $(LIB_TARGET): $(LIB_OBJS)
 
 # Rule to compile the main program and link with the library
 $(EXECUTABLE): $(MAIN_OBJ) $(LIB_TARGET)
-	$(CC) $(MAIN_OBJ) -L. -lsimp -o $(EXECUTABLE)
+	$(CC) $(MAIN_OBJ) -L. -lsimp $(LINUX_FLAGS) -o $(EXECUTABLE)
 
 # Rule to compile .c files into .o
 %.o: %.c
