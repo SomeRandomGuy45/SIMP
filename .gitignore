@@ -3,7 +3,8 @@
 /.vscode
 .DS_STORE
 simp
-*.dll
+*.dylib
 *.so
 *.dll
+*.zip
 server/node_modules

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 
-size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
+size_t write_callback_function(void *ptr, size_t size, size_t nmemb, void *userdata) {
     size_t total_size = size * nmemb;
     char **response = (char **)userdata;
 
@@ -23,6 +23,14 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     return total_size;
 }
 
+size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    size_t written = fwrite(ptr, size, nmemb, stream);
+    if (written != size * nmemb) {
+        fprintf(stderr, "Error writing data to file\n");
+    }
+    return written;
+}
+
 char* curl_function(char *url) {
     CURL *curl;
     CURLcode res;
@@ -34,8 +42,7 @@ char* curl_function(char *url) {
         // Set the URL
         curl_easy_setopt(curl, CURLOPT_URL, url);
 
-        // Write the response to stdout
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_function);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_data);
 
         // Perform the request
@@ -50,6 +57,41 @@ char* curl_function(char *url) {
         curl_easy_cleanup(curl);
     }
     return response_data;
+}
+
+void curl_function_download(char *url, char *path) {
+    CURL *curl;
+    CURLcode res;
+    FILE *file;
+    
+    curl = curl_easy_init();
+    if (!curl) {
+        fprintf(stderr, "Failed to initialize curl\n");
+        return;
+    }
+    char full_path[512];
+    snprintf(full_path, sizeof(full_path), "%s.zip", path);
+    file = fopen(full_path, "wb");
+    if (!file) {
+        perror("Error opening file");
+        curl_easy_cleanup(curl);
+        return;
+    }
+
+    // Set URL to download
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+
+    res = curl_easy_perform(curl);
+    // Check for errors
+    if (res != CURLE_OK) {
+        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+    }
+
+    // Clean up
+    fclose(file);
+    curl_easy_cleanup(curl);
 }
 
 int check_url_status() {

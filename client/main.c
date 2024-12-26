@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include "simp-helper/simp.h"
@@ -20,6 +21,15 @@ int run_options(char **argv) {
     }
     return 0;
 };
+
+char* concat(const char *s1, const char *s2)
+{
+    char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
+    // in real code you would check for errors in malloc here
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
+}
 
 int main(int argc, char *argv[]) {
     if (!folder_exists(SIMP_TEMP_PATH)) {
@@ -45,11 +55,25 @@ int main(int argc, char *argv[]) {
         cJSON *jsonData = get_project_data(urlNum, argv[2]);
         if (jsonData == NULL) {
             fprintf(stderr, "Failed to retrieve project data. Exiting...\n");
+            return -1;
+        }
+
+        cJSON *urlItem = cJSON_GetObjectItem(jsonData, "url");
+        char* url = (urlItem != NULL) ? urlItem->valuestring : NULL;
+
+        cJSON *pathItem = cJSON_GetObjectItem(jsonData, "projectName");
+        char* path = (pathItem != NULL) ? pathItem->valuestring : NULL;
+
+        if (url == NULL || path == NULL) {
+            fprintf(stderr, "Missing required data in the JSON. Exiting...\n");
             cJSON_free(jsonData);
             return -1;
         }
-        
+
         cJSON_free(jsonData);
+        char *FullURL = concat(URLS[urlNum], url);
+        curl_function_download(FullURL, path);
+        free(FullURL);
     }
     return 0;
 }
