@@ -39,7 +39,6 @@ app.get('/api/project-data/:projectName/download', (req, res) => {
         }
     }, (err) => {
         if (err) {
-            // Only handle the error here without trying to send another response
             if (!res.headersSent) {
                 res.status(404).json({ status: 'Error', message: 'File not found' })
             }
