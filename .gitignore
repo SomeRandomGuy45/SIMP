@@ -1,10 +1,13 @@
 *.o
 *.exe
-/.vscode
-.DS_STORE
-simp
+client/libsimplib.dylib
+client/libsimplib.dll
+client/libsimplib.so
 *.dylib
 *.so
 *.dll
 *.zip
+/.vscode
+.DS_STORE
+simp
 server/node_modules
