@@ -1,15 +1,16 @@
 const express = require('express');
+const dotenv = require('dotenv');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const app = express();
-const port = 8080;
+const port = process.env["PORT"] || 8080;
+dotenv.config();
 
 const defaultMessage = { status: 'OK', port: port };
 const projectDataDir = path.join(__dirname, 'projects');
-const JWT_SECRET = 'Pizhxlz0ipjdxSJM8POCaET2gtRasCJ6';  // Secret key for signing JWT tokens
 
 if (!fs.existsSync(projectDataDir)) {
     fs.mkdir(projectDataDir, (err, data) => {});
@@ -26,6 +27,8 @@ if (!fs.existsSync(path.join(__dirname, 'users.json'))) {
         console.log('Created users.json');
     })
 }
+
+const JWT_SECRET = process.env["TOKEN"] || "";  // Secret key for signing JWT tokens
 
 // Function to read users from users.json
 function readUsersFromFile() {

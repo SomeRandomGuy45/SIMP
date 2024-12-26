@@ -15,3 +15,4 @@ uploads.json
 users.json
 projects
 projects/*
+*.env
