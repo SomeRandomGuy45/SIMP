@@ -1,0 +1,9 @@
+*.o
+*.exe
+/.vscode
+.DS_STORE
+simp
+*.dll
+*.so
+*.dll
+server/node_modules
