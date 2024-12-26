@@ -5,18 +5,18 @@
 #include "simp-helper/simp.h"
 
 void show_usage() {
-    printf("simp [option]\n Options:\n    -h, --help     Show this help message\n    -c, create   Create a new project\n    -i, --install  Install project dependencies\n   -op, --option Set SIMP option\n");
+    printf("simp [option]\n Options:\n    h, help     Show this help message\n    c, create   Create a new project\n    i, install  Install project dependencies\n  op, option Set SIMP option\n");
 }
 
 int run_options(char **argv) {
-    if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+    if (strcmp(argv[1], "h") == 0 || strcmp(argv[1], "help") == 0) {
         show_usage();
         return 0;
-    } else if (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "create") == 0) {
+    } else if (strcmp(argv[1], "c") == 0 || strcmp(argv[1], "create") == 0) {
         return 1;
-    } else if (strcmp(argv[1], "-i") == 0 || strcmp(argv[1], "--install") == 0) {
+    } else if (strcmp(argv[1], "i") == 0 || strcmp(argv[1], "install") == 0) {
         return 2;
-    } else if (strcmp(argv[1], "-op") == 0 || strcmp(argv[1], "--option") == 0) {
+    } else if (strcmp(argv[1], "op") == 0 || strcmp(argv[1], "option") == 0) {
         return 3;
     }
     return 0;

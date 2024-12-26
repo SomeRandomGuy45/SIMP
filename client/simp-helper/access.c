@@ -48,7 +48,6 @@ int curl_upload(const char* access_token, const char* server_url, const char* pr
         return 1;
     }
 
-    printf("File uploaded successfully.\n");
     return 0;
 }
 
@@ -87,9 +86,7 @@ void extract_file(const char *filename, const char *output_dir) {
     // Execute the command
     int result = system(command);
 
-    if (result == 0) {
-        printf("Successfully extracted '%s' to '%s'\n", filename, output_dir);
-    } else {
+    if (result != 0) {
         fprintf(stderr, "Failed to extract '%s' to '%s'. Command executed: %s\n", filename, output_dir, command);
     }
     remove(filename);
