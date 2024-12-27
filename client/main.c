@@ -77,6 +77,11 @@ int main(int argc, char *argv[]) {
     free(password);
     if (shouldQuit == 1) {
         struct project_data *data = malloc(sizeof(struct project_data));
+        char* project_name_cwd = getcwd(NULL, 0);
+        if (project_name_cwd == NULL)
+        {
+            return -1;
+        }
         if (data == NULL) {
             perror("Failed to allocate memory for project data");
             return -1;
@@ -102,9 +107,10 @@ int main(int argc, char *argv[]) {
 
         init_project_data(data);
 
-        zip_files(data->project_name, data->project_name);
+        zip_files(data->project_name, project_name_cwd, 0);
         curl_upload(cJSON_GetObjectItem(loginTokenJSON, "token")->valuestring, URLS[urlNum], data->project_name, data->project_name);
         free(data);
+        free(project_name_cwd);
     } else if (shouldQuit == 2) {
         if (!folder_exists("simple_modules")) {
             if (create_folder("simple_modules")) {
@@ -148,7 +154,6 @@ int main(int argc, char *argv[]) {
         }
         char* configFilePath = malloc(512);
         snprintf(configFilePath, 512, "%s/%s", project_name_cwd, "/config.json");
-        zip_files(project_name_cwd, project_name_cwd);
         FILE* file = fopen(configFilePath, "r");
         fseek(file, 0, SEEK_END);
         long fileSize = ftell(file);
@@ -166,6 +171,7 @@ int main(int argc, char *argv[]) {
         fread(content, 1, fileSize, file);
         content[fileSize] = '\0'; // Null-terminate the string
         cJSON* json = cJSON_Parse(content);
+        zip_files(cJSON_GetObjectItem(json, "project_name")->valuestring, project_name_cwd, 1);
         curl_upload(cJSON_GetObjectItem(loginTokenJSON, "token")->valuestring, URLS[urlNum], cJSON_GetObjectItem(json, "project_name")->valuestring, project_name_cwd);
         char* zipPath = malloc(512);
         snprintf(zipPath, 512, "%s/%s", project_name_cwd, ".zip");

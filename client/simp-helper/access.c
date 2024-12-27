@@ -3,8 +3,11 @@
 
 #ifdef _WIN32
     #define ZIP_COMMAND "powershell.exe Compress-Archive -Force -Path \"%s\" -DestinationPath \"%s\""
+    #define ISWIN 1
 #else
-    #define ZIP_COMMAND "zip -r \"%s.zip\" \"%s\"/"
+    #define ZIP_COMMAND "cd \"%s\" && zip -r \"%s.zip\" *"
+    #define ZIP_COMMAND_2 "zip -r \"%s.zip\" *"
+    #define ISWIN 0
 #endif
 
 #include <curl/curl.h>
@@ -12,12 +15,18 @@
 #include <string.h>
 #include <stdio.h>
 
-int zip_files(const char* source_dir, const char* zip_file) {
+int zip_files(const char* source_dir, const char* zip_file, int useCD) {
     char command[1024];
-
     // Construct the command string
-    snprintf(command, sizeof(command), ZIP_COMMAND, source_dir, zip_file);
-
+    if (useCD == 0 || ISWIN == 1)
+    {
+        char add[1024];
+        snprintf(add, sizeof(add), "%s/%s", zip_file, source_dir);
+        snprintf(command, sizeof(command), ZIP_COMMAND, source_dir, add); 
+    } else {
+        snprintf(command, sizeof(command), ZIP_COMMAND_2, zip_file);
+    }
+    printf("%s", command);
     // Execute the command using system()
     int result = system(command);
 
@@ -126,8 +135,12 @@ char* curl_function_download(char *url, char *path) {
         fprintf(stderr, "Failed to initialize curl\n");
         return "";
     }
+    char *half_path = malloc(512);
+    snprintf(half_path, 512, "%s/%s/", "simple_modules", path);
+    create_folder(half_path);
+    free(half_path);
     char *full_path = malloc(512);
-    snprintf(full_path, 512, "%s/%s.zip", "simple_modules", path);
+    snprintf(full_path, 512, "%s/%s/%s.zip", "simple_modules", path, path);
     file = fopen(full_path, "wb");
     if (!file) {
         perror("Error opening file");
