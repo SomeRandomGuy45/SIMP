@@ -133,6 +133,14 @@ function verifyToken(req, res, next) {
     });
 }
 
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // Mock registration route (POST to register a new user)
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
@@ -149,8 +157,22 @@ app.post('/register', (req, res) => {
     // Hash the password
     const hashedPassword = bcrypt.hashSync(password, 10);
 
+    function generateUniqueUUID(users) {
+        let uuid;
+        let isUnique = false;
+
+        while (!isUnique) {
+            uuid = generateUUID();
+            isUnique = !users.some(u => u.userUUID === uuid); // Check if UUID is already in use
+        }
+
+        return uuid;
+    }
+    
+    const userUUID = generateUniqueUUID(users);
+
     // Create the new user and add to the "database"
-    users.push({ username, password: hashedPassword });
+    users.push({ username, password: hashedPassword, userUUID});
 
     // Save the updated users list to the file
     saveUsersToFile(users);
@@ -179,7 +201,7 @@ app.post('/login', (req, res) => {
         }
 
         // Generate JWT token
-        const token = jwt.sign({ userId: user.username }, JWT_SECRET, { expiresIn: '100y' });
+        const token = jwt.sign({ userId: user.userUUID }, JWT_SECRET, { expiresIn: '100y' });
 
         res.json({ status: 'OK', message: 'Logged in successfully', token });
     });
