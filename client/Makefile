@@ -19,6 +19,7 @@ else
     ifeq ($(UNAME_S),Darwin)
         LIB_TARGET = libsimp.dylib
         LDFLAGS = -shared
+        MACOS_FLAGS = install_name_tool -change libsimp.dylib @executable_path/libsimp.dylib simp
     else
         LIB_TARGET = libsimp.so
         LDFLAGS = -shared
@@ -38,10 +39,12 @@ build_thing:
 # Rule to build the shared library
 $(LIB_TARGET): $(LIB_OBJS)
 	$(CC) $(LIB_OBJS) $(LDFLAGS) -lcurl -o $(LIB_TARGET)
-
 # Rule to compile the main program and link with the library
 $(EXECUTABLE): $(MAIN_OBJ) $(LIB_TARGET)
 	$(CC) $(MAIN_OBJ) -L. -lsimp $(LINUX_FLAGS) -o $(EXECUTABLE)
+ifeq ($(UNAME_S),Darwin)
+	$(MACOS_FLAGS)
+endif
 
 # Rule to compile .c files into .o
 %.o: %.c

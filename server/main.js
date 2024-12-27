@@ -6,11 +6,23 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const expressWs = require('express-ws');
+const decompress = require("decompress");
 const app = express();
+const sprintf = require('sprintf-js').sprintf;
 expressWs(app);
+
+const { exec } = require('child_process');
+
 const port = process.env["PORT"] || 8080;
 dotenv.config();
 
+const isWin = process.platform === "win32";
+let format = 'cd %s && cd .. && zip -r "%s" * && cd ~ && rm -rf %s'
+
+if (isWin)
+{
+    //format = 'powershell.exe Compress-Archive -Force -Path "%s" -DestinationPath "%s"'
+}
 const defaultMessage = { status: 'OK', port: port };
 const projectDataDir = path.join(__dirname, 'projects');
 
@@ -31,6 +43,11 @@ if (!fs.existsSync(path.join(__dirname, 'users.json'))) {
 }
 
 const JWT_SECRET = process.env["TOKEN"] || "";  // Secret key for signing JWT tokens
+
+async function zipDirectory(sourceDir, outPath, projectName) {
+    let format2 = sprintf(format, sourceDir, outPath, path.join(projectDataDir, projectName))
+    exec(format2)
+}
 
 // Function to read users from users.json
 function readUsersFromFile() {
@@ -83,20 +100,17 @@ function saveUploadsToFile(uploads) {
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const projectName = req.params.projectName;
-        const projectDir = path.join(projectDataDir, projectName);
-
-        // Create project directory if it doesn't exist
-        if (!fs.existsSync(projectDir)) {
-        fs.mkdirSync(projectDir);
-        }
-
-        cb(null, projectDir); // Save to the project directory
+        const projectDir = path.join(projectDataDir);  // Create a folder for each project
+        console.log(projectDir)
+        cb(null, projectDir); // Save the file inside the project directory
     },
     filename: (req, file, cb) => {
-        cb(null, file.originalname); // Use the original file name
+        const projectName = req.params.projectName;
+        const fileName = `${projectName}.zip`; // Use the project name for the file name
+
+        cb(null, fileName); // Save the file with the correct name
     },
 });
-
 const upload = multer({ storage: storage });
 
 // Parse JSON request bodies
@@ -215,7 +229,7 @@ app.get('/api/project-data/:projectName/download', (req, res) => {
     });
 });
 
-async function uploadFile(projectName, userId) {
+async function uploadFile(projectName, userId, file) {
     if (!file) {
         return "error1"
     }
@@ -235,18 +249,46 @@ async function uploadFile(projectName, userId) {
     saveUploadsToFile(userUploads)
 }
 
+function doZipLogic(projectName)
+{
+    decompress("projects/" + projectName + ".zip", "projects/" + projectName)
+        .then(async (files) => {
+            fs.stat("projects/" + projectName + ".zip", (err, stats) => {
+                if (err) {
+                    console.log("File not found or unable to access:", err);
+                } else {
+                    fs.unlink("projects/" + projectName + ".zip", (err) => {
+                        if (err) {
+                            console.log("Error deleting file:", err);
+                        }
+                    });
+                }
+            });            
+            files.forEach(async element => {
+                if (element.type == "directory" && element.path != projectName + "/")
+                {
+                    zipDirectory(path.join(projectDataDir, projectName, element.path), path.join(projectDataDir, projectName), projectName)
+                }
+            });
+        })
+        .catch((error) => {
+            console.log(error);
+        });
+}
+
 // Store uploaded file information with user ID
 app.post('/api/project-data/:projectName/upload', verifyToken, upload.single('file'), async (req, res) => {
     const projectName = req.params.projectName;
     const file = req.file;
     const userId = req.userId;  // Get user ID from token
 
-    let msg = await uploadFile(projectName, userId);
+    let msg = await uploadFile(projectName, userId, file);
     if (msg == "error1") {
         return res.status(400).json({ status: 'Error', message: 'No file uploaded' });
     } else if (msg == "error2") {
         return res.status(403).json({ status: 'Error', message: 'You cannot re-upload this file' });
     }
+    doZipLogic(projectName)
     res.setHeader('Content-Type', 'application/json');
     res.json({
         status: 'OK',

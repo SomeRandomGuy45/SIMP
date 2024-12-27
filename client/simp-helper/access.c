@@ -3,9 +3,7 @@
 
 #ifdef _WIN32
     #define ZIP_COMMAND "powershell.exe Compress-Archive -Force -Path \"%s\" -DestinationPath \"%s\""
-#elif __APPLE__
-    #define ZIP_COMMAND "zip -r \"%s.zip\" \"%s\"/"
-#elif __linux__
+#else
     #define ZIP_COMMAND "zip -r \"%s.zip\" \"%s\"/"
 #endif
 
@@ -27,10 +25,8 @@ int zip_files(const char* source_dir, const char* zip_file) {
         fprintf(stderr, "Error: Failed to create zip archive.\n");
         return 1;
     }
-
     return 0;
 }
-
 
 int curl_upload(const char* access_token, const char* server_url, const char* project_name, const char* upload_file) {
     char command[2048];

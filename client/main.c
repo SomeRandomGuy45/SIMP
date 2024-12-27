@@ -18,6 +18,8 @@ int run_options(char **argv) {
         return 2;
     } else if (strcmp(argv[1], "op") == 0 || strcmp(argv[1], "option") == 0) {
         return 3;
+    } else if (strcmp(argv[1], "u") == 0 || strcmp(argv[1], "update") == 0) {
+        return 4;
     }
     return 0;
 };
@@ -138,6 +140,42 @@ int main(int argc, char *argv[]) {
         free(InstallFilePath);
     } else if (shouldQuit == 3) {
         // TODO
+    } else if (shouldQuit == 4) {
+        char* project_name_cwd = getcwd(NULL, 0);
+        if (project_name_cwd == NULL)
+        {
+            return -1;
+        }
+        char* configFilePath = malloc(512);
+        snprintf(configFilePath, 512, "%s/%s", project_name_cwd, "/config.json");
+        zip_files(project_name_cwd, project_name_cwd);
+        FILE* file = fopen(configFilePath, "r");
+        fseek(file, 0, SEEK_END);
+        long fileSize = ftell(file);
+        rewind(file); // Go back to the start of the file
+
+        // Allocate memory for the file content (+1 for null terminator)
+        char *content = (char *)malloc(fileSize + 1);
+        if (content == NULL) {
+            perror("Error allocating memory");
+            fclose(file);
+            return 1;
+        }
+
+        // Read the file into the buffer and null-terminate
+        fread(content, 1, fileSize, file);
+        content[fileSize] = '\0'; // Null-terminate the string
+        cJSON* json = cJSON_Parse(content);
+        curl_upload(cJSON_GetObjectItem(loginTokenJSON, "token")->valuestring, URLS[urlNum], cJSON_GetObjectItem(json, "project_name")->valuestring, project_name_cwd);
+        char* zipPath = malloc(512);
+        snprintf(zipPath, 512, "%s/%s", project_name_cwd, ".zip");
+        remove(zipPath);
+        cJSON_free(json);
+        free(content);
+        fclose(file);
+        free(zipPath);
+        free(project_name_cwd);
+        free(configFilePath);
     }
     cJSON_Delete(loginTokenJSON);
     return 0;
