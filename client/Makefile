@@ -31,7 +31,7 @@ endif
 EXECUTABLE = simp
 
 # Default rule to build everything
-all: $(EXECUTABLE)
+all: build_thing $(EXECUTABLE)
 
 build_thing:
 	clang -c simp-helper/cJSON.c -o simp-helper/cJSON.o
