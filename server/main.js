@@ -9,17 +9,9 @@ const expressWs = require('express-ws');
 const app = express();
 expressWs(app);
 
-const { exec } = require('child_process');
-
 const port = process.env["PORT"] || 8080;
 dotenv.config();
 
-const isWin = process.platform === "win32";
-
-if (isWin)
-{
-    //format = 'powershell.exe Compress-Archive -Force -Path "%s" -DestinationPath "%s"'
-}
 const defaultMessage = { status: 'OK', port: port };
 const projectDataDir = path.join(__dirname, 'projects');
 

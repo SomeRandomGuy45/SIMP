@@ -2,7 +2,8 @@
 #include "options.h"
 
 #ifdef _WIN32
-    #define ZIP_COMMAND "powershell.exe Compress-Archive -Force -Path \"%s\" -DestinationPath \"%s\""
+    #define ZIP_COMMAND "powershell -Command \"Set-Location '%s'; Compress-Archive -Path * -DestinationPath '%s.zip'\""
+    #define ZIP_COMMAND_2 "powershell -Command \"Compress-Archive -Path * -DestinationPath '%s.zip'\""
     #define ISWIN 1
 #else
     #define ZIP_COMMAND "cd \"%s\" && zip -r \"%s.zip\" *"
@@ -18,7 +19,7 @@
 int zip_files(const char* source_dir, const char* zip_file, int useCD) {
     char command[1024];
     // Construct the command string
-    if (useCD == 0 || ISWIN == 1)
+    if (useCD == 0)
     {
         char add[1024];
         snprintf(add, sizeof(add), "%s/%s", zip_file, source_dir);
